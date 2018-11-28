@@ -11,9 +11,10 @@ import java.util.Map;
 public class Kaa_Bone extends JsonBean {
 
     public static class Frame {
-        public boolean tweenEasing;
+        public boolean tweenEasing; // false=过x帧跳到该帧 true=满满的过渡到该帧
         public Transform transform;
-        public float duration; // 解析到这里的意义不是这一个frame的时长 而是显示起点 上一帧的时长
+//        public float duration; // 解析到这里的意义不是这一个frame的时长 而是显示起点 上一帧的时长
+        public int frameCount = 0; // 使用帧数在android上更好用
     }
 
     public ArrayList<Frame> frames = new ArrayList<>();
@@ -24,33 +25,48 @@ public class Kaa_Bone extends JsonBean {
         _name(json, bean);
 
         JSONArray arr = (json!=null)?json.optJSONArray(kFrame):null;
-        if (arr!=null) {
-            float duration = 0;
+        if (arr!=null&&arr.length()>0) {
+//            float duration = 0;
             boolean tweenEasing = false;
+            int frameCount = 0;
+            Frame frame = null;
+            Transform base = boneTransforms.get(bean.name);
             for (int i = 0; i< arr.length(); ++i) {
                 JSONObject item = arr.optJSONObject(i);
 
-                Frame frame = new Frame();
-                frame.transform = Transform.fromJson(_obj(item, kTransform), boneTransforms.get(bean.name));
-                frame.duration = duration;
+                frame = new Frame();
+                frame.transform = Transform.fromJson(_obj(item, kTransform), base);
+//                frame.frameCount = _int(item, kDuration, 0);
+//                frame.tweenEasing = _int(item, kTweenEasing, -1)!=-1;
+//                frame.duration = duration;
                 frame.tweenEasing = tweenEasing;
+                frame.frameCount = frameCount;
 
                 // duration原始时长的计数单位是帧数 ?
-                duration = 1.0f/frameRate * _int(item, kDuration, 0);
+//                duration = 1.0f/frameRate * _int(item, kDuration, 0);
                 tweenEasing = _int(item, kTweenEasing, -1)!=-1;
+                frameCount = _int(item, kDuration, 0);
 
                 bean.frames.add(frame);
             }
 
+            if (frameCount>0) {
+                frame = bean.frames.get(0);
+                Frame last = new Frame();
+                last.tweenEasing = false;
+                last.transform = frame.transform;
+                last.frameCount = frameCount;
+                bean.frames.add(last);
+            }
             // 最后一帧又回到了第1帧 为了循环么?
-            if (duration!=0) {
-                Frame frame = new Frame();
-                Frame first = bean.frames.get(0);
-                frame.transform = first.transform;
-                frame.tweenEasing = false;
-                frame.duration = duration;
-                bean.frames.add(frame);
-            }
+//            if (duration!=0) {
+//                Frame frame = new Frame();
+//                Frame first = bean.frames.get(0);
+//                frame.transform = first.transform;
+//                frame.tweenEasing = false;
+//                frame.duration = duration;
+//                bean.frames.add(frame);
+//            }
         }
 
         return bean;

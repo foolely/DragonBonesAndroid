@@ -16,22 +16,27 @@ public class JsonBean {
     public static final String kFrameRate = "frameRate";
 
     public static int _int(JSONObject json, String key, int def) {
-        return json.has(key)?json.optInt(key):def;
+        return json!=null?json.optInt(key, def):def;
+//        return json.has(key)?json.optInt(key):def;
     }
 
     public static float _float(JSONObject json, String key, float def) {
-        return (json!=null&&json.has(key))?(float)json.optDouble(key):def;
+        return json!=null?(float) json.optDouble(key, def):def;
+//        return (json!=null&&json.has(key))?(float)json.optDouble(key):def;
     }
 
     public static double _double(JSONObject json, String key, double def) {
-        return (json!=null&&json.has(key))?json.optDouble(key):def;
+        return json!=null?json.optDouble(key, def):def;
+//        return (json!=null&&json.has(key))?json.optDouble(key):def;
     }
 
     public static String _str(JSONObject json, String key, String def) {
-        return (json!=null&&json.has(key))?json.optString(key):def;
+        return json!=null?json.optString(key, def):def;
+//        return (json!=null&&json.has(key))?json.optString(key):def;
     }
 
     public static JSONObject _obj(JSONObject json, String key) {
+//        return json.optJSONObject(key);
         return json!=null?json.optJSONObject(key):null;
     }
 

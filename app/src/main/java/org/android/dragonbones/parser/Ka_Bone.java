@@ -7,6 +7,7 @@ import org.json.JSONObject;
 public class Ka_Bone extends JsonBean {
     public Transform transform;
     public String parent;
+    public int length; // todo:
 
     public static Ka_Bone fromJson(JSONObject json) {
         Ka_Bone bean = new Ka_Bone();
@@ -14,6 +15,8 @@ public class Ka_Bone extends JsonBean {
         _name(json, bean);
         bean.transform = Transform.fromJson(_obj(json, kTransform), null);
         bean.parent = _str(json, kParent, null);
+
+        bean.length = _int(json, "length", 0); // todo:fix
 
         return bean;
     }

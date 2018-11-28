@@ -4,6 +4,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 // @root
 // 文件最外层
@@ -15,7 +16,8 @@ public class Skeleton extends JsonBean {
     public int frameRate;
     public String version;
     public int isGlobal;
-    public ArrayList<Armature> armatures = new ArrayList<>();
+    private ArrayList<Armature> armatures = new ArrayList<>();
+    private HashMap<String, Armature> itemsMap = new HashMap<>();
 
     public static Skeleton fromJson(JSONObject json) {
         Skeleton bean = new Skeleton();
@@ -30,8 +32,13 @@ public class Skeleton extends JsonBean {
             for (int i = 0; i < arr.length(); ++i) {
                 Armature armature = Armature.fromJson(arr.optJSONObject(i));
                 bean.armatures.add(armature);
+                bean.itemsMap.put(armature.name, armature);
             }
         }
         return bean;
+    }
+
+    public Armature armature(String name) {
+        return itemsMap.get(name);
     }
 }

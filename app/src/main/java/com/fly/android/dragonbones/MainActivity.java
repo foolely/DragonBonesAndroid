@@ -1,16 +1,31 @@
 package com.fly.android.dragonbones;
 
+import android.graphics.Camera;
+import android.graphics.Matrix;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.JsonReader;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import org.android.dragonbones.parser.Skeleton;
+import org.json.JSONObject;
+import org.json.JSONTokener;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+
 public class MainActivity extends AppCompatActivity {
 
+    private static void _log(String txt) {
+        android.util.Log.e("dragonbones", txt);
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -26,6 +41,58 @@ public class MainActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+
+//        readSke();
+        useMatrix();
+    }
+    private void useMatrix() {
+        Camera camera = new Camera();
+        camera.save();
+        camera.rotateY(60);
+        Matrix matrix = new Matrix();
+        camera.getMatrix(matrix);
+        _log("y=60,matrix="+matrix);
+        camera.restore();
+
+        camera.rotateX(45);
+        camera.getMatrix(matrix);
+        _log("x=45,matrix="+matrix);
+        camera.restore();
+
+    }
+    public static String readText(String path,int maxLen) {
+        FileInputStream in = null;
+        String r = null;
+        do {
+            try {
+                File f = new File(path);
+                if (!f.exists()) break;
+                if (maxLen<=0) maxLen = (int)f.length();
+                in = new FileInputStream(f);
+                byte[] bin = new byte[maxLen];
+                int ret = in.read(bin);
+                r = new String(bin, 0, ret);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } while (false);
+        if (in!=null) {
+            try {
+                in.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return r;
+    }
+    private void readSke() {
+        try {
+            JSONObject json = new JSONObject(readText("/mnt/sdcard/ske.json", 0));
+            Skeleton ske = Skeleton.fromJson(json);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Override

@@ -12,6 +12,7 @@ public class Kass_Display extends JsonBean {
 
     public int type = tImage;
     public Transform transform;
+    public String path; // todo:
 
     public static Kass_Display fromJson(JSONObject json) {
         Kass_Display bean = new Kass_Display();
@@ -25,6 +26,9 @@ public class Kass_Display extends JsonBean {
             }
         }
         bean.transform = Transform.fromJson(_obj(json, kTransform), null);
+
+        // todo:fix 目前json文件path=name
+        bean.path = _str(json, "path", null);
 
         return bean;
     }
