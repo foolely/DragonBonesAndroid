@@ -12,6 +12,9 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import org.android.dragonbones.layer.ArmatureDrawable;
+import org.android.dragonbones.layer.ArmatureNode;
+import org.android.dragonbones.layer.SimpleImageCache;
 import org.android.dragonbones.parser.Skeleton;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -42,8 +45,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-//        readSke();
-        useMatrix();
+        readSke();
+//        useMatrix();
     }
     private void useMatrix() {
         Camera camera = new Camera();
@@ -85,14 +88,22 @@ public class MainActivity extends AppCompatActivity {
         }
         return r;
     }
+    private SimpleImageCache mImageCache;
     private void readSke() {
+        mImageCache = new SimpleImageCache();
+        mImageCache.setDir("/mnt/sdcard/ske");
+        ArmatureDrawable ad = new ArmatureDrawable();
         try {
             JSONObject json = new JSONObject(readText("/mnt/sdcard/ske.json", 0));
             Skeleton ske = Skeleton.fromJson(json);
+            ArmatureNode an = ArmatureNode.fromParser(ske, "Armatureblue", null, mImageCache);
+            ad.mNode = an;
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+        View nodeView = findViewById(R.id.nodeView);
+        nodeView.setBackgroundDrawable(ad);
     }
 
     @Override
