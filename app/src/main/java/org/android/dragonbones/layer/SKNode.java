@@ -2,12 +2,11 @@ package org.android.dragonbones.layer;
 
 import android.animation.ValueAnimator;
 import android.graphics.Canvas;
-import android.graphics.Matrix;
 
+import org.android.dragonbones.parser.ShowEffect;
 import org.android.dragonbones.parser.Transform;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 
@@ -15,55 +14,19 @@ import java.util.Comparator;
 // bone 有坐标/偏移/缩放等属性
 // slot 没有坐标等属性 有z属性
 public class SKNode implements SKParent {
-    public static class DrawContext {
-        public Matrix matrix = new Matrix();
-        private ArrayList<Matrix> stack = new ArrayList<>();
-        private int stackCount = 0;
-        // 保存
-        public int save() {
-            Matrix backup = null;
-            if (stack.size()>stackCount) {
-                backup = stack.get(stackCount);
-            } else {
-                backup = new Matrix();
-                stack.add(backup);
-            }
-            backup.set(matrix);
-            return stackCount++;
-        }
-        // 还原
-        public int restore() {
-            if (stackCount>0) {
-                matrix.set(stack.get(--stackCount));
-            }
-            return stackCount;
-        }
-        // 还原到计数
-        public int restoreToCount(int save) {
-            if (save<0) return stackCount;
-            if (save<stackCount) {
-                matrix.set(stack.get(save));
-                stackCount = save;
-            }
-            return stackCount;
-        }
-        public float x,y;
-        public float progress;
-        public long curTick;
-        public int totalFrames = 1;
-        public int frameIndex = 0; // 当前帧序列
-        public int needNextFrames; // 需要绘制下一帧
-    }
     public String nodeType = "base";
     public boolean isShow = true;
-    public int z = 0;
+    public int z = 0; // slot节点的属性
     public String name;
-    public float x = 0,y = 0;
-    public float scaleX = 1;
-    public float scaleY = 1;
-    public float skX = 0,skY = 0; // 倾斜
+    private Transform mTransform; // slot节点没有该属性
+    private ShowEffect mEffect; // slot节点专有
+//    public float x = 0,y = 0;
+//    public float scaleX = 1;
+//    public float scaleY = 1;
+//    public float skX = 0,skY = 0; // 倾斜
 
     public SKParent parent;
+    protected SKAnimation mAnimation;
     // child树结构
     public ArrayList<SKNode> subNodes = new ArrayList<>();
 
@@ -90,62 +53,115 @@ public class SKNode implements SKParent {
         }
     }
 
-    // 设置参数
+    // 设置变换参数
     public void setTransform(Transform dst) {
-        x = dst.x;
-        y = dst.y;
-        scaleX = dst.scX;
-        scaleY = dst.scY;
-        skX = dst.skX;
-        skY = dst.skY;
+        if (mTransform==null) {
+            mTransform = new Transform();
+        }
+        if (!mTransform.isEqual(dst)) {
+            mTransform.set(dst);
+            requestDraw();
+        }
+    }
+    @Override
+    public void requestDraw() {
+        if (parent!=null) {
+            parent.requestDraw();
+        }
+    }
+    // 设置显示效果
+    public void setEffect(ShowEffect dst) {
+        if (mEffect == null) {
+            mEffect = new ShowEffect();
+        }
+
+        if (!mEffect.isEqual(dst)) {
+            mEffect.set(dst);
+        }
     }
 
-    public void draw(Canvas canvas, DrawContext context) {
+    public void draw(Canvas canvas, SKContext context) {
 
     }
-    public void dispatchDraw(Canvas canvas, DrawContext context) {
+
+    protected void onLayout(SKContext ctx) {
+    }
+    public void dispatchLayout(SKContext ctx) {
+        // 应用动画
         int save = -1;
-        if (x!=0||y!=0) {
-            save = canvas.save();
-            canvas.translate(x,y);
-//            save = context.save();
-//            context.matrix.preTranslate(x, y);
+        if (mTransform!=null) {
+            save = ctx.apply(mTransform);
         }
-        if (scaleX!=1||scaleY!=1) {
-            if (save==-1) {
-                save = canvas.save();
+
+        if (mEffect!=null) {
+            // todo:需要处理alpha
+            // 处理显示哪个帧
+            int disIdx = mEffect.displayIndex;
+            for (int i = 0; i < subNodes.size(); ++i) {
+                SKNode node = subNodes.get(i);
+                node.isShow = disIdx == i;
             }
-            canvas.scale(scaleX, scaleY);
         }
-        if (skX != 0 || skY != 0) {
-            if (save==-1) {
-                save = canvas.save();
-            }
-            canvas.rotate((skX+skY)*0.5f);
-        }
-        context.x += x;
-        context.y += y;
-        _log("x="+context.x+",y="+context.y);
         // 先画自己
-        draw(canvas, context);
+        onLayout(ctx);
+
+        if (subNodes.size()>0) {
+            ctx.z += z;
+            for (SKNode node : subNodes) {
+                if (node.isShow) {
+                    node.dispatchLayout(ctx);
+                }
+            }
+            ctx.z -= z;
+        }
+
+        if (save != -1) {
+            ctx.restoreToCount(save);
+        }
+    }
+    public void dispatchDraw(Canvas canvas, SKContext ctx) {
+        int save = -1;
+        if (mTransform!=null) {
+            save = ctx.apply(mTransform);
+        }
+        // 先画自己
+        draw(canvas, ctx);
 
         Collections.sort(subNodes, new Comparator<SKNode>() {
             @Override
             public int compare(SKNode node0, SKNode node1) {
-                return node1.z - node0.z;
+                return node0.z - node1.z;
             }
         });
 
         for (SKNode node : subNodes) {
             if (node.isShow) {
-                node.dispatchDraw(canvas, context);
+                node.dispatchDraw(canvas, ctx);
             }
         }
 
-        context.x -= x;
-        context.y -= y;
         if (save != -1) {
             canvas.restoreToCount(save);
+        }
+    }
+
+    public void setAnimation(SKAnimation ani) {
+        mAnimation = ani;
+    }
+    // 清楚动画
+    public void clearAnimations() {
+        mAnimation = null;
+        for (SKNode item : subNodes) {
+            item.clearAnimations();
+        }
+    }
+    public void calcAnimations(int frameIdx) {
+        if (mAnimation != null) {
+            mAnimation.update(this, frameIdx);
+        }
+
+        for (SKNode item : subNodes) {
+            item.calcAnimations(frameIdx);
         }
     }
 }

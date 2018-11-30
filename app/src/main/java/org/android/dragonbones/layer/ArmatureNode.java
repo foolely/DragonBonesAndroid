@@ -8,6 +8,7 @@ import org.android.dragonbones.parser.Ka_Bone;
 import org.android.dragonbones.parser.Ka_Skin;
 import org.android.dragonbones.parser.Ka_Slot;
 import org.android.dragonbones.parser.Kaa_Bone;
+import org.android.dragonbones.parser.Kaa_Frame;
 import org.android.dragonbones.parser.Kaa_Slot;
 import org.android.dragonbones.parser.Kas_Slot;
 import org.android.dragonbones.parser.Kass_Display;
@@ -18,14 +19,64 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ArmatureNode extends SKNode {
-    private HashMap<String, HashMap<String, SKAnimation>> boneAnimations = new HashMap<>();
-    private HashMap<String, HashMap<String, SKAnimation>> slotAnimations = new HashMap<>();
+    private HashMap<String, ArrayList<SKAnimation>> boneAnimations = new HashMap<>();
+    private HashMap<String, ArrayList<SKAnimation>> slotAnimations = new HashMap<>();
     private HashMap<String, SKAnimation> frameAnimations = new HashMap<>();
     private HashMap<String, SKNode> bones = new HashMap<>();
     private HashMap<String, SKNode> slots = new HashMap<>();
     private ArrayList<ArmatureNode> subArmatureNodes = new ArrayList<>();
 
-    private ValueAnimator mFrameAnimator;
+    public int frameRate = 24;
+
+    // 播放制定名字的动画
+    public int playAnimation(String name, boolean repeat) {
+        clearAnimations();
+
+        int maxFrames = 0;
+        ArrayList<SKAnimation> anis = boneAnimations.get(name);
+        if (anis !=null && anis.size() > 0) {
+            for (SKAnimation ani : anis) {
+                SKNode node = bones.get(ani.name);
+                if (node != null) {
+                    node.setAnimation(ani);
+                    ani.play(repeat);
+                    if (ani.totalFrames > maxFrames) maxFrames = ani.totalFrames;
+                }
+            }
+        }
+
+        anis = slotAnimations.get(name);
+        if (anis !=null && anis.size() > 0) {
+            for (SKAnimation ani : anis) {
+                SKNode node = slots.get(ani.name);
+                if (node != null) {
+                    node.setAnimation(ani);
+                    ani.play(repeat);
+                    if (ani.totalFrames > maxFrames) maxFrames = ani.totalFrames;
+                }
+            }
+        }
+
+        for (ArmatureNode item : subArmatureNodes) {
+            item.playAnimation(name, repeat);
+        }
+
+        requestDraw();
+
+        return maxFrames;
+    }
+
+    private boolean needDraw = false;
+    @Override
+    public void requestDraw() {
+        needDraw = true;
+    }
+    // 清除绘制标志
+    public boolean clearNeedDraw() {
+        boolean ret = needDraw;
+        needDraw = false;
+        return ret;
+    }
 
     public static ArmatureNode fromParser(Skeleton parser, String name, Transform base, ImageCache cache) {
         Armature armature = parser.armature(name);
@@ -34,6 +85,7 @@ public class ArmatureNode extends SKNode {
         ArmatureNode root = new ArmatureNode();
         root.nodeType = "armature";
         root.name = name;
+        root.frameRate = armature.frameRate;
 //        root.mFrameAnimator = ValueAnimator.
 //        armature.frameRate;
         if (base!=null) {
@@ -64,7 +116,7 @@ public class ArmatureNode extends SKNode {
                 for (Kass_Display display : slot.displays) {
                     switch (display.type) {
                         case Kass_Display.tImage:
-                            node.addChild(DisplayNode.fromBean(display, cache));
+                            node.addChild(createDisplayNode(display, cache));
                             break;
                         case Kass_Display.tArmature:
                         case Kass_Display.tMesh: { // 2个都是子骨架 写在一起
@@ -73,29 +125,32 @@ public class ArmatureNode extends SKNode {
                             root.subArmatureNodes.add(subItem);
                             break; }
                     }
-
                 }
             }
         }
 
         // 动画
         for (Ka_Animation animation : armature.animations) {
-            HashMap<String, SKAnimation> boneAni = new HashMap<>();
-            HashMap<String, SKAnimation> slotAni = new HashMap<>();
+            ArrayList<SKAnimation> boneAni = new ArrayList<>();
+            ArrayList<SKAnimation> slotAni = new ArrayList<>();
 
             // bone动画序列 有位移/缩放/错切 跳帧
             for (Kaa_Bone bone : animation.bones) {
+                SKAnimation ani = SKAnimation.createBoneAni(bone.name, bone.frames);
+                boneAni.add(ani);
+                // 测试代码
                 SKNode node = root.bones.get(bone.name);
-                Kaa_Bone.Frame firstFrame = bone.frames.get(0);
-                node.setTransform(firstFrame.transform);
+                Kaa_Frame firstFrame = bone.frames.get(0);
+                node.setTransform(firstFrame.transform());
             }
+            root.boneAnimations.put(animation.name, boneAni);
 
             // slot动画序列 只有显示/隐藏(即时) 淡入/淡出
             for (Kaa_Slot slot : animation.slots) {
-                SKNode node = root.slots.get(slot.name);
-                Kaa_Slot.Frame firstFrame = slot.frames.get(0);
-//                node.z = slot
+                SKAnimation ani = SKAnimation.createSlotAni(slot.name, slot.frames);
+                slotAni.add(ani);
             }
+            root.slotAnimations.put(animation.name, slotAni);
 
             // frame 播放声音
             for (Ka_Animation.Frame frame : animation.frames) {
@@ -106,19 +161,30 @@ public class ArmatureNode extends SKNode {
         return root;
     }
     // bone节点 可以嵌套 可以加slot节点
-    public static SKNode createBoneNode(Ka_Bone bean) {
+    private static SKNode createBoneNode(Ka_Bone bean) {
         SKNode node = new SKNode();
         node.nodeType = "bone";
         node.name = bean.name;
         node.setTransform(bean.transform);
         return node;
     }
-    public static SKNode createSlotNode(Ka_Slot slot) {
+    // slot节点 叶子节点 只能加display节点
+    private static SKNode createSlotNode(Ka_Slot slot) {
         SKNode node = new SKNode();
         node.nodeType = "slot";
         node.name = slot.name;
         node.z = slot.z; // /100
         return node;
     }
+    // 显示节点 显示图片
+    private static DisplayNode createDisplayNode(Kass_Display display, ImageCache cache) {
+        DisplayNode node = new DisplayNode();
+        node.nodeType = "image";
+        node.name = display.name;
+        node.mImage = cache.load(display.name);
+        node.setTransform(display.transform);
+        return node;
+    }
+
 }
 

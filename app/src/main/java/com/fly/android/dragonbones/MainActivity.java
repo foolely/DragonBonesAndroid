@@ -104,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
 
         View nodeView = findViewById(R.id.nodeView);
         nodeView.setBackgroundDrawable(ad);
+        ad.play("default", true);
     }
 
     @Override

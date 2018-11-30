@@ -5,33 +5,36 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 
-import org.android.dragonbones.parser.Kass_Display;
-
-public class DisplayNode extends SKNode {
+public class DisplayNode extends SKNode implements SKDraw {
     protected Paint mPaint = new Paint();
-    private Bitmap mImage;
+    public Bitmap mImage;
     private Matrix mMatrix = new Matrix();
-    public static DisplayNode fromBean(Kass_Display display, ImageCache cache) {
-//                         let components = display.name.components(separatedBy: "/")
-//                        let atlasName = components[0]
-//                        let textureName = components[1].addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed)!
-//                        let atlas = SKTextureAtlas(named: atlasName)
-//                        let texture = atlas.textureNamed(textureName)
-//
-//                        let spriteNode = EDDisplayNode(transform: display.transform, texture: texture)
-        DisplayNode node = new DisplayNode();
-        node.nodeType = "image";
-        node.name = display.name;
-        node.mImage = cache.load(display.name);
-        node.setTransform(display.transform);
-        return node;
+    private int zOrder = 0;
+    public DisplayNode() {
+        mPaint.setAntiAlias(true);
+    }
+    @Override
+    public int zOrder() {
+        return zOrder;
     }
 
     @Override
-    public void draw(Canvas canvas, DrawContext context) {
+    public Matrix matrix() {
+        return mMatrix;
+    }
+
+    @Override
+    protected void onLayout(SKContext ctx) {
+        mMatrix.set(ctx.matrix);
+        zOrder = ctx.z + z;
+        ctx.addDrawItem(this);
+    }
+
+    @Override
+    public void draw(Canvas canvas, SKContext context) {
         super.draw(canvas, context);
         mPaint.setColor(0xff0000ff);
-        canvas.drawText(name, x+20, y+20, mPaint);
+        canvas.drawText(name, 0, 0, mPaint);
         if (mImage!=null) {
             float left = mImage.getWidth() * -0.5f;
             float top = mImage.getHeight() * -0.5f;

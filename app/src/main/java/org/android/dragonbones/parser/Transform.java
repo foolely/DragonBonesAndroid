@@ -48,6 +48,39 @@ public class Transform {
         return bean;
     }
 
+    // 复制
+    public void set(Transform dst) {
+        x = dst.x;
+        y = dst.y;
+        scX = dst.scX;
+        scY = dst.scY;
+        skX = dst.skX;
+        skY = dst.skY;
+    }
+
+    // 中间采样设置
+    public void set(Transform beg, Transform end, float progress) {
+        if (progress==0) {
+            set(beg);
+        } else if (progress==1) {
+            set(end);
+        } else {
+            float rate = 1 - progress;
+            x = beg.x * rate + end.x * progress;
+            y = beg.y * rate + end.y * progress;
+            scX = beg.scX * rate + end.scX * progress;
+            scY = beg.scY * rate + end.scY * progress;
+            skX = beg.skX * rate + end.skX * progress;
+            skY = beg.skY * rate + end.skY * progress;
+        }
+    }
+
+    public boolean isEqual(Transform dst) {
+        return x == dst.x && y == dst.y &&
+                scX == dst.scX && scY == dst.scY &&
+                skX == dst.skX && skY == dst.skY;
+    }
+
 //    init(json: JSON, defaultTransform: Transform) {
 //        let offsetSkX = json["skX"].double ?? 0
 //        let offsetSkY = json["skY"].double ?? 0
