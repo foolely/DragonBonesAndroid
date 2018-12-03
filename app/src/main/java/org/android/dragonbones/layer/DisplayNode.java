@@ -27,22 +27,20 @@ public class DisplayNode extends SKNode implements SKDraw {
     protected void onLayout(SKContext ctx) {
         mMatrix.set(ctx.matrix);
         zOrder = ctx.z + z;
+        mPaint.setAlpha((int)(255*ctx.alpha));
         ctx.addDrawItem(this);
     }
 
     @Override
-    public void draw(Canvas canvas, SKContext context) {
-        super.draw(canvas, context);
-        mPaint.setColor(0xff0000ff);
-        canvas.drawText(name, 0, 0, mPaint);
+    public void draw(Canvas canvas, SKContext ctx) {
+        if (ctx.isShowName) {
+            mPaint.setColor(0xff0000ff);
+            canvas.drawText(name, 0, 0, mPaint);
+        }
         if (mImage!=null) {
             float left = mImage.getWidth() * -0.5f;
             float top = mImage.getHeight() * -0.5f;
             canvas.drawBitmap(mImage, left, top, mPaint);
-//            mMatrix.setTranslate(centerX, centerY);
-//            mMatrix.setScale(scaleX, scaleY);
-//            mMatrix.setRotate((skX+skY)*0.5f, x, y);
-//            canvas.drawBitmap(mImage, mMatrix, mPaint);
         }
 //        canvas.drawBitmap();
     }

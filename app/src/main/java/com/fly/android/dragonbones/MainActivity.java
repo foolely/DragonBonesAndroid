@@ -40,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                mAd.play("default", false);
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
             }
@@ -63,48 +64,14 @@ public class MainActivity extends AppCompatActivity {
         camera.restore();
 
     }
-    public static String readText(String path,int maxLen) {
-        FileInputStream in = null;
-        String r = null;
-        do {
-            try {
-                File f = new File(path);
-                if (!f.exists()) break;
-                if (maxLen<=0) maxLen = (int)f.length();
-                in = new FileInputStream(f);
-                byte[] bin = new byte[maxLen];
-                int ret = in.read(bin);
-                r = new String(bin, 0, ret);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } while (false);
-        if (in!=null) {
-            try {
-                in.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        return r;
-    }
-    private SimpleImageCache mImageCache;
+    private ArmatureDrawable mAd = new ArmatureDrawable();
     private void readSke() {
-        mImageCache = new SimpleImageCache();
-        mImageCache.setDir("/mnt/sdcard/ske");
-        ArmatureDrawable ad = new ArmatureDrawable();
-        try {
-            JSONObject json = new JSONObject(readText("/mnt/sdcard/ske.json", 0));
-            Skeleton ske = Skeleton.fromJson(json);
-            ArmatureNode an = ArmatureNode.fromParser(ske, "Armatureblue", null, mImageCache);
-            ad.mNode = an;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        mAd.enableSimpleImageCache("/mnt/sdcard/ske");
+        mAd.loadAnimation("/mnt/sdcard/ske.json", "Armatureblue");
 
         View nodeView = findViewById(R.id.nodeView);
-        nodeView.setBackgroundDrawable(ad);
-        ad.play("default", true);
+        nodeView.setBackgroundDrawable(mAd);
+        mAd.play("default", false);
     }
 
     @Override

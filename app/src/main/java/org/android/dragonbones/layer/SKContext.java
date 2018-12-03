@@ -12,7 +12,11 @@ import java.util.Comparator;
 public class SKContext {
     public Matrix matrix = new Matrix();
     public int z; // 当前z轴高度
-    public ArrayList<SKDraw> mItems = new ArrayList<>();
+    public float alpha = 1.0f;
+    public int frameIndex = 0; // 当前帧序列
+    public boolean isShowName = false;
+
+    private ArrayList<SKDraw> mItems = new ArrayList<>();
 
     private ArrayList<Matrix> stack = new ArrayList<>();
     private int stackCount = 0;
@@ -56,13 +60,6 @@ public class SKContext {
     public void rotate(float v) {
         matrix.preRotate(v);
     }
-
-    public float x,y;
-    public float progress;
-    public long curTick;
-    public int totalFrames = 1;
-    public int frameIndex = 0; // 当前帧序列
-    public int needNextFrames; // 需要绘制下一帧
 
     public void resetDrawItems() {
         mItems.clear();

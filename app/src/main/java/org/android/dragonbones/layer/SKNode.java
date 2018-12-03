@@ -19,7 +19,17 @@ public class SKNode implements SKParent {
     public int z = 0; // slot节点的属性
     public String name;
     private Transform mTransform; // slot节点没有该属性
-    private ShowEffect mEffect; // slot节点专有
+    private InnerEffect mEffect; // slot节点专有
+    private static class InnerEffect extends ShowEffect {
+        public float alphaSave = -1;
+        public void apply(SKContext ctx) {
+            alphaSave = ctx.alpha;
+            ctx.alpha *= alpha;
+        }
+        public void restore(SKContext ctx) {
+            ctx.alpha = alphaSave;
+        }
+    }
 //    public float x = 0,y = 0;
 //    public float scaleX = 1;
 //    public float scaleY = 1;
@@ -72,11 +82,12 @@ public class SKNode implements SKParent {
     // 设置显示效果
     public void setEffect(ShowEffect dst) {
         if (mEffect == null) {
-            mEffect = new ShowEffect();
+            mEffect = new InnerEffect();
         }
 
         if (!mEffect.isEqual(dst)) {
             mEffect.set(dst);
+            requestDraw();
         }
     }
 
@@ -101,6 +112,7 @@ public class SKNode implements SKParent {
                 SKNode node = subNodes.get(i);
                 node.isShow = disIdx == i;
             }
+            mEffect.apply(ctx);
         }
         // 先画自己
         onLayout(ctx);
@@ -117,6 +129,9 @@ public class SKNode implements SKParent {
 
         if (save != -1) {
             ctx.restoreToCount(save);
+        }
+        if (mEffect !=null) {
+            mEffect.restore(ctx);
         }
     }
     public void dispatchDraw(Canvas canvas, SKContext ctx) {

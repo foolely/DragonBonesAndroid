@@ -1,7 +1,5 @@
 package org.android.dragonbones.layer;
 
-import android.animation.ValueAnimator;
-
 import org.android.dragonbones.parser.Armature;
 import org.android.dragonbones.parser.Ka_Animation;
 import org.android.dragonbones.parser.Ka_Bone;
@@ -19,12 +17,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ArmatureNode extends SKNode {
-    private HashMap<String, ArrayList<SKAnimation>> boneAnimations = new HashMap<>();
-    private HashMap<String, ArrayList<SKAnimation>> slotAnimations = new HashMap<>();
-    private HashMap<String, SKAnimation> frameAnimations = new HashMap<>();
     private HashMap<String, SKNode> bones = new HashMap<>();
     private HashMap<String, SKNode> slots = new HashMap<>();
     private ArrayList<ArmatureNode> subArmatureNodes = new ArrayList<>();
+    private HashMap<String, Animation> animations = new HashMap<>();
+
+    private static class Animation {
+        public ArrayList<SKAnimation> bones = new ArrayList<>();
+        public ArrayList<SKAnimation> slots = new ArrayList<>();
+        public SKAnimation frame;
+        public String name;
+    }
 
     public int frameRate = 24;
 
@@ -33,7 +36,8 @@ public class ArmatureNode extends SKNode {
         clearAnimations();
 
         int maxFrames = 0;
-        ArrayList<SKAnimation> anis = boneAnimations.get(name);
+        Animation aniset = animations.get(name);
+        ArrayList<SKAnimation> anis = aniset.bones;
         if (anis !=null && anis.size() > 0) {
             for (SKAnimation ani : anis) {
                 SKNode node = bones.get(ani.name);
@@ -45,7 +49,7 @@ public class ArmatureNode extends SKNode {
             }
         }
 
-        anis = slotAnimations.get(name);
+        anis = aniset.slots;
         if (anis !=null && anis.size() > 0) {
             for (SKAnimation ani : anis) {
                 SKNode node = slots.get(ani.name);
@@ -86,8 +90,6 @@ public class ArmatureNode extends SKNode {
         root.nodeType = "armature";
         root.name = name;
         root.frameRate = armature.frameRate;
-//        root.mFrameAnimator = ValueAnimator.
-//        armature.frameRate;
         if (base!=null) {
             root.setTransform(base);
         }
@@ -131,30 +133,29 @@ public class ArmatureNode extends SKNode {
 
         // 动画
         for (Ka_Animation animation : armature.animations) {
-            ArrayList<SKAnimation> boneAni = new ArrayList<>();
-            ArrayList<SKAnimation> slotAni = new ArrayList<>();
+            Animation aniset = new Animation();
+            aniset.name = animation.name;
+            root.animations.put(animation.name, aniset);
 
             // bone动画序列 有位移/缩放/错切 跳帧
             for (Kaa_Bone bone : animation.bones) {
                 SKAnimation ani = SKAnimation.createBoneAni(bone.name, bone.frames);
-                boneAni.add(ani);
+                aniset.bones.add(ani);
                 // 测试代码
                 SKNode node = root.bones.get(bone.name);
                 Kaa_Frame firstFrame = bone.frames.get(0);
                 node.setTransform(firstFrame.transform());
             }
-            root.boneAnimations.put(animation.name, boneAni);
 
             // slot动画序列 只有显示/隐藏(即时) 淡入/淡出
             for (Kaa_Slot slot : animation.slots) {
                 SKAnimation ani = SKAnimation.createSlotAni(slot.name, slot.frames);
-                slotAni.add(ani);
+                aniset.slots.add(ani);
             }
-            root.slotAnimations.put(animation.name, slotAni);
 
             // frame 播放声音
             for (Ka_Animation.Frame frame : animation.frames) {
-
+                // todo: sound?
             }
         }
 
@@ -185,6 +186,5 @@ public class ArmatureNode extends SKNode {
         node.setTransform(display.transform);
         return node;
     }
-
 }
 
