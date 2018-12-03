@@ -23,21 +23,38 @@ public class ArmatureDrawable extends Drawable implements ValueAnimator.Animator
     private ValueAnimator mFrameAnimator;
     private ArmatureNode mNode;
     private SKContext mDrawContext = new SKContext();
-    private Paint mPaint = new Paint();
+    private float mScale = 1.0f;
     private PaintFlagsDrawFilter mAntiAlias = new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
     @Override
     public void draw(@NonNull Canvas canvas) {
         if (mNode!=null) {
-            mPaint.setColor(0xffff0000);
-            mPaint.setStyle(Paint.Style.STROKE);
             canvas.setDrawFilter(mAntiAlias);
             Rect bounds = getBounds();
-            canvas.drawRect(bounds, mPaint);
-            canvas.translate(bounds.width()/2, bounds.height()/2 );
+            // 元素中心放置于绘制区域的中心
+//            canvas.translate(bounds.width()/2, bounds.height()/2 );
+            float x = 0, y = 0;
+            if (mNode.width>0 && mNode.height>0 && bounds.width()>0 && bounds.height()>0) {
+                x = bounds.width()*mNode.x;
+                y = bounds.height()*mNode.y;
+                canvas.translate(x, y);
+
+                float sx = bounds.width()/mNode.width;
+                float sy = bounds.height()/mNode.height;
+                if (sx > sy) sx = sy;
+                sx *= mScale;
+                canvas.scale(sx, sx);
+//                canvas.scale(sx, sy);
+            } else {
+                x = bounds.width() * 0.5f;
+                y = bounds.height() * 0.5f;
+                canvas.translate(x, y);
+                canvas.scale(mScale, mScale);
+            }
             mDrawContext.resetDrawItems();
             mNode.dispatchLayout(mDrawContext);
             mDrawContext.dispatchDraw(canvas);
-            canvas.translate(-bounds.width()/2, -bounds.height()/2 );
+            canvas.translate(-x, -y);
+//            canvas.translate(-bounds.width()/2, -bounds.height()/2 );
         }
     }
 
@@ -54,6 +71,7 @@ public class ArmatureDrawable extends Drawable implements ValueAnimator.Animator
         return PixelFormat.TRANSPARENT;
     }
 
+    // 读取文本文件
     public static String readText(String path,int maxLen) {
         FileInputStream in = null;
         String r = null;
@@ -80,13 +98,19 @@ public class ArmatureDrawable extends Drawable implements ValueAnimator.Animator
         return r;
     }
 
+    public void setScale(float scale) {
+        mScale = scale;
+    }
     // 设置图片缓存对象
     public void setImageCache(ImageCache ic) {
         mImageCache = ic;
     }
     // 初始化简单缓存对象
-    public void enableSimpleImageCache(String dir) {
+    public void enableSimpleImageCache(String dir, boolean clean) {
         if (mImageCache !=null && mImageCache instanceof SimpleImageCache) {
+            if (clean) {
+                ((SimpleImageCache) mImageCache).clear();
+            }
             ((SimpleImageCache) mImageCache).setDir(dir);
         } else {
             SimpleImageCache ic = new SimpleImageCache();
@@ -134,7 +158,7 @@ public class ArmatureDrawable extends Drawable implements ValueAnimator.Animator
         }
         mFrameAnimator = ValueAnimator.ofInt(0, maxFrames);
         mFrameAnimator.setDuration(1000*maxFrames/mNode.frameRate);
-        mFrameAnimator.setRepeatCount(repeat?Integer.MAX_VALUE:0);
+        mFrameAnimator.setRepeatCount(repeat?Integer.MAX_VALUE:0); // 0=1遍 1=2遍
         mFrameAnimator.addUpdateListener(this);
 
         mFrameAnimator.start();
@@ -151,13 +175,13 @@ public class ArmatureDrawable extends Drawable implements ValueAnimator.Animator
     public void onAnimationUpdate(ValueAnimator valueAnimator) {
         Integer value = (Integer) valueAnimator.getAnimatedValue();
         if (value != mDrawContext.frameIndex) {
-            mNode._log("onAnimationUpdate:"+value);
+//            mNode._log("onAnimationUpdate:"+value);
             mDrawContext.frameIndex = value;
             mNode.calcAnimations(mDrawContext.frameIndex);
             if (mNode.clearNeedDraw()) {
                 invalidateSelf();
             } else {
-                mNode._log("no draw:"+value);
+//                mNode._log("no draw:"+value);
             }
         }
     }

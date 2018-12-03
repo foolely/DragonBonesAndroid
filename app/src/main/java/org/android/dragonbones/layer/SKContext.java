@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.Comparator;
 
 public class SKContext {
-    public Matrix matrix = new Matrix();
     public int z; // 当前z轴高度
     public float alpha = 1.0f;
     public int frameIndex = 0; // 当前帧序列
@@ -18,6 +17,8 @@ public class SKContext {
 
     private ArrayList<SKDraw> mItems = new ArrayList<>();
 
+    // 变换参数及保存栈
+    public Matrix matrix = new Matrix();
     private ArrayList<Matrix> stack = new ArrayList<>();
     private int stackCount = 0;
     // 保存
@@ -49,21 +50,24 @@ public class SKContext {
         return stackCount;
     }
 
+    // 平移
     public void translate(float x, float y) {
         matrix.preTranslate(x, y);
     }
-
+    // 缩放
     public void scale(float scaleX, float scaleY) {
         matrix.preScale(scaleX, scaleY);
     }
-
+    // 旋转
     public void rotate(float v) {
         matrix.preRotate(v);
     }
 
+    // 清除绘制item
     public void resetDrawItems() {
         mItems.clear();
     }
+    // 分发绘制item
     public void dispatchDraw(Canvas canvas) {
         if (mItems.size()==0) return;
 
@@ -82,11 +86,12 @@ public class SKContext {
             canvas.restoreToCount(save);
         }
     }
+    // 添加绘制item
     public void addDrawItem(SKDraw item) {
         mItems.add(item);
     }
 
-    // 应用变换
+    // 应用变换参数
     public int apply(Transform t) {
         int save = -1;
         if (t.x!=0||t.y!=0) {

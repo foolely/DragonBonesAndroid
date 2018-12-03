@@ -21,6 +21,8 @@ public class Armature extends JsonBean {
     public ArrayList<Ka_Action> actions = new ArrayList<>();
     public Ka_IK ik; // todo:
 
+    public float x,y,width,height; // aabb节点
+
     public static Armature fromJson(JSONObject json) {
         Armature bean = new Armature();
 
@@ -64,6 +66,24 @@ public class Armature extends JsonBean {
         if (arr != null) {
             for (int i = 0; i < arr.length(); ++i) {
                 bean.actions.add(Ka_Action.fromJson(arr.optJSONObject(i)));
+            }
+        }
+
+        // 获取aabb节点的信息
+        JSONObject aabb = _obj(json, "aabb");
+        if (aabb != null) {
+            bean.x = _float(aabb, "x", -1);
+            bean.y = _float(aabb, "y", -1);
+            bean.width = _float(aabb, "width", -1);
+            bean.height = _float(aabb, "height", -1);
+            if (bean.width > 0 && bean.height > 0) {
+                // 纠偏 xy不一定在正中心
+//                float half = bean.width * 0.5f + bean.x;
+//                bean.width += half>0?half*2:-half*2;
+//                half = bean.height * 0.5f + bean.y;
+//                bean.height += half>0?half*2:-half*2;
+//                bean.width = bean.x/bean.width;
+//                bean.height = bean.y/bean.height;
             }
         }
 

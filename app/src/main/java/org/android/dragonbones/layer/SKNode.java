@@ -1,14 +1,11 @@
 package org.android.dragonbones.layer;
 
 import android.animation.ValueAnimator;
-import android.graphics.Canvas;
 
 import org.android.dragonbones.parser.ShowEffect;
 import org.android.dragonbones.parser.Transform;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 
 // 显示节点
 // bone 有坐标/偏移/缩放等属性
@@ -16,11 +13,12 @@ import java.util.Comparator;
 public class SKNode implements SKParent {
     public String nodeType = "base";
     public boolean isShow = true;
-    public int z = 0; // slot节点的属性
+    public int z = 0; // slot节点的属性 其他节点都是0
     public String name;
-    private Transform mTransform; // slot节点没有该属性
-    private InnerEffect mEffect; // slot节点专有
-    private static class InnerEffect extends ShowEffect {
+    protected Transform mTransform; // 平移变换对象 slot节点没有该属性
+    protected InnerEffect mEffect; // 显示效果对象 slot节点专有
+    protected SKAnimation mAnimation; // 动画对象
+    protected static class InnerEffect extends ShowEffect {
         public float alphaSave = -1;
         public void apply(SKContext ctx) {
             alphaSave = ctx.alpha;
@@ -30,19 +28,15 @@ public class SKNode implements SKParent {
             ctx.alpha = alphaSave;
         }
     }
-//    public float x = 0,y = 0;
-//    public float scaleX = 1;
-//    public float scaleY = 1;
-//    public float skX = 0,skY = 0; // 倾斜
 
-    public SKParent parent;
-    protected SKAnimation mAnimation;
+    // 父节点
+    protected SKParent parent;
     // child树结构
-    public ArrayList<SKNode> subNodes = new ArrayList<>();
+    protected ArrayList<SKNode> subNodes = new ArrayList<>();
 
-    public void _log(String txt) {
-        android.util.Log.e("SKNode", name+"@"+nodeType+":"+txt);
-    }
+//    public void _log(String txt) {
+//        android.util.Log.e("SKNode", name+"@"+nodeType+":"+txt);
+//    }
 
     @Override
     public void addChild(SKNode child) {
@@ -63,7 +57,7 @@ public class SKNode implements SKParent {
         }
     }
 
-    // 设置变换参数
+    // 设置变换参数 bone/display
     public void setTransform(Transform dst) {
         if (mTransform==null) {
             mTransform = new Transform();
@@ -79,7 +73,7 @@ public class SKNode implements SKParent {
             parent.requestDraw();
         }
     }
-    // 设置显示效果
+    // 设置显示效果 slot
     public void setEffect(ShowEffect dst) {
         if (mEffect == null) {
             mEffect = new InnerEffect();
@@ -91,9 +85,14 @@ public class SKNode implements SKParent {
         }
     }
 
-    public void draw(Canvas canvas, SKContext context) {
-
-    }
+//    public void draw(Canvas canvas, SKContext context) {
+//
+//    }
+//    protected void onMeasure(SKContext ctx) {
+//    }
+//    public void dispatchMeasure(SKContext ctx) {
+//
+//    }
 
     protected void onLayout(SKContext ctx) {
     }
@@ -134,42 +133,44 @@ public class SKNode implements SKParent {
             mEffect.restore(ctx);
         }
     }
-    public void dispatchDraw(Canvas canvas, SKContext ctx) {
-        int save = -1;
-        if (mTransform!=null) {
-            save = ctx.apply(mTransform);
-        }
-        // 先画自己
-        draw(canvas, ctx);
+//    public void dispatchDraw(Canvas canvas, SKContext ctx) {
+//        int save = -1;
+//        if (mTransform!=null) {
+//            save = ctx.apply(mTransform);
+//        }
+//        // 先画自己
+//        draw(canvas, ctx);
+//
+//        Collections.sort(subNodes, new Comparator<SKNode>() {
+//            @Override
+//            public int compare(SKNode node0, SKNode node1) {
+//                return node0.z - node1.z;
+//            }
+//        });
+//
+//        for (SKNode node : subNodes) {
+//            if (node.isShow) {
+//                node.dispatchDraw(canvas, ctx);
+//            }
+//        }
+//
+//        if (save != -1) {
+//            canvas.restoreToCount(save);
+//        }
+//    }
 
-        Collections.sort(subNodes, new Comparator<SKNode>() {
-            @Override
-            public int compare(SKNode node0, SKNode node1) {
-                return node0.z - node1.z;
-            }
-        });
-
-        for (SKNode node : subNodes) {
-            if (node.isShow) {
-                node.dispatchDraw(canvas, ctx);
-            }
-        }
-
-        if (save != -1) {
-            canvas.restoreToCount(save);
-        }
-    }
-
+    // 设置节点上的动画
     public void setAnimation(SKAnimation ani) {
         mAnimation = ani;
     }
-    // 清楚动画
+    // 清除动画
     public void clearAnimations() {
         mAnimation = null;
         for (SKNode item : subNodes) {
             item.clearAnimations();
         }
     }
+    // 更新动画参数
     public void calcAnimations(int frameIdx) {
         if (mAnimation != null) {
             mAnimation.update(this, frameIdx);

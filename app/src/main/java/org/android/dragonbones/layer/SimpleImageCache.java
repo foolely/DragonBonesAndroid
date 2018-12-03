@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import java.io.File;
 import java.util.HashMap;
 
+// 简单的图片获取及缓存 从目录读取图片并解码使用
 public class SimpleImageCache implements ImageCache {
     private String mRootDir;
     private HashMap<String, Bitmap> mCache = new HashMap<>();

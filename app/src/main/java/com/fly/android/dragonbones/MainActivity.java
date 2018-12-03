@@ -40,15 +40,23 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mAd.play("default", false);
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                int nTimes = 4;
+                ++mSkeIdx;
+                mSkeIdx %= nTimes*SKES.length;
+                if (mSkeIdx % nTimes == 0) {
+                    readSke(SKES[mSkeIdx/nTimes]);
+                }
+                mAd.play(null, false);
+//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+//                        .setAction("Action", null).show();
             }
         });
 
-        readSke();
+        readSke("/mnt/sdcard/ske.json");
 //        useMatrix();
     }
+    private static final String[] SKES = {"/mnt/sdcard/ske/blue_ske.json","/mnt/sdcard/ske/green_ske.json","/mnt/sdcard/ske/red_ske.json","/mnt/sdcard/ske/yellow_ske.json"};
+    private int mSkeIdx = 0;
     private void useMatrix() {
         Camera camera = new Camera();
         camera.save();
@@ -65,10 +73,11 @@ public class MainActivity extends AppCompatActivity {
 
     }
     private ArmatureDrawable mAd = new ArmatureDrawable();
-    private void readSke() {
-        mAd.enableSimpleImageCache("/mnt/sdcard/ske");
+    private void readSke(String path) {
+        mAd.setScale(0.8f);
+        mAd.enableSimpleImageCache("/mnt/sdcard/ske", true);
 //        mAd.loadAnimation("/mnt/sdcard/ske.json", "Armatureblue");
-        mAd.loadAnimation("/mnt/sdcard/ske.json", null);
+        mAd.loadAnimation(path, null);
 
         View nodeView = findViewById(R.id.nodeView);
         nodeView.setBackgroundDrawable(mAd);

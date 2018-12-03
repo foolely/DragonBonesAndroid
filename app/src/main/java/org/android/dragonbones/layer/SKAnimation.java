@@ -98,11 +98,13 @@ public abstract class SKAnimation {
         frames = frs;
         totalFrames = SKAnimation.sumFrames(frames);
     }
+    // 创建bone动画 支持各项变换参数
     public static SKAnimation createBoneAni(String name, ArrayList<Kaa_Frame> frames) {
         Bone ani = new Bone();
         ani.init(name, frames);
         return ani;
     }
+    // 创建slot动画 支持显示效果
     public static SKAnimation createSlotAni(String name, ArrayList<Kaa_Frame> frames) {
         Slot ani = new Slot();
         ani.init(name, frames);

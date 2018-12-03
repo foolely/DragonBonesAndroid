@@ -22,6 +22,8 @@ public class ArmatureNode extends SKNode {
     private ArrayList<ArmatureNode> subArmatureNodes = new ArrayList<>();
     private ArrayList<Animation> animations = new ArrayList<>();
 
+    public float x = 0.5f, y = 0.5f, width = -1, height = -1;
+
     private static class Animation {
         public ArrayList<SKAnimation> bones = new ArrayList<>();
         public ArrayList<SKAnimation> slots = new ArrayList<>();
@@ -100,6 +102,7 @@ public class ArmatureNode extends SKNode {
         return ret;
     }
 
+    // 创建对象node
     public static ArmatureNode fromParser(Skeleton parser, String name, Transform base, ImageCache cache) {
         Armature armature = parser.armature(name);
         if (armature==null) return null;
@@ -110,6 +113,15 @@ public class ArmatureNode extends SKNode {
         root.frameRate = armature.frameRate;
         if (base!=null) {
             root.setTransform(base);
+        }
+
+        if (armature.width>0 && armature.height>0) {
+            root.x = armature.x/armature.width;
+            root.y = armature.y/armature.height;
+            if (root.x < 0) root.x = - root.x;
+            if (root.y < 0) root.y = - root.y;
+            root.width = armature.width;
+            root.height = armature.height;
         }
 
         // 分支节点 构造树结构
