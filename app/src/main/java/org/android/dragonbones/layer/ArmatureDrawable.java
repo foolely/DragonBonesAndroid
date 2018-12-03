@@ -112,6 +112,9 @@ public class ArmatureDrawable extends Drawable implements ValueAnimator.Animator
     public boolean loadAnimationFromJson(JSONObject json, String name) {
         try {
             Skeleton ske = Skeleton.fromJson(json);
+            if (name == null) {
+                name = ske.getDefaultName();
+            }
             ArmatureNode an = ArmatureNode.fromParser(ske, name, null, mImageCache);
             mNode = an;
             return true;
@@ -131,7 +134,7 @@ public class ArmatureDrawable extends Drawable implements ValueAnimator.Animator
         }
         mFrameAnimator = ValueAnimator.ofInt(0, maxFrames);
         mFrameAnimator.setDuration(1000*maxFrames/mNode.frameRate);
-        mFrameAnimator.setRepeatCount(repeat?Integer.MAX_VALUE:1);
+        mFrameAnimator.setRepeatCount(repeat?Integer.MAX_VALUE:0);
         mFrameAnimator.addUpdateListener(this);
 
         mFrameAnimator.start();
@@ -148,6 +151,7 @@ public class ArmatureDrawable extends Drawable implements ValueAnimator.Animator
     public void onAnimationUpdate(ValueAnimator valueAnimator) {
         Integer value = (Integer) valueAnimator.getAnimatedValue();
         if (value != mDrawContext.frameIndex) {
+            mNode._log("onAnimationUpdate:"+value);
             mDrawContext.frameIndex = value;
             mNode.calcAnimations(mDrawContext.frameIndex);
             if (mNode.clearNeedDraw()) {

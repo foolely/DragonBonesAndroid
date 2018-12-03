@@ -13,7 +13,6 @@ public class Armature extends JsonBean {
     public static final String kActions = "theDefaultActions";
 
     public String type;
-    public String name;
     public int frameRate;
     public ArrayList<Ka_Bone> bones = new ArrayList<>();
     public ArrayList<Ka_Skin> skins = new ArrayList<>();

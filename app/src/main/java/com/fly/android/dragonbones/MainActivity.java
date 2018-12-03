@@ -67,11 +67,13 @@ public class MainActivity extends AppCompatActivity {
     private ArmatureDrawable mAd = new ArmatureDrawable();
     private void readSke() {
         mAd.enableSimpleImageCache("/mnt/sdcard/ske");
-        mAd.loadAnimation("/mnt/sdcard/ske.json", "Armatureblue");
+//        mAd.loadAnimation("/mnt/sdcard/ske.json", "Armatureblue");
+        mAd.loadAnimation("/mnt/sdcard/ske.json", null);
 
         View nodeView = findViewById(R.id.nodeView);
         nodeView.setBackgroundDrawable(mAd);
-        mAd.play("default", false);
+//        mAd.play("default", false);
+        mAd.play(null, false);
     }
 
     @Override

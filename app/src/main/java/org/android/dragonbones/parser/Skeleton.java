@@ -41,4 +41,14 @@ public class Skeleton extends JsonBean {
     public Armature armature(String name) {
         return itemsMap.get(name);
     }
+
+    // 获取默认的动画名字
+    public String getDefaultName() {
+        for (Armature armature : armatures) {
+            if (armature.animations.size() > 0) {
+                return armature.name;
+            }
+        }
+        return "none";
+    }
 }

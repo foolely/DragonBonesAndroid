@@ -20,7 +20,7 @@ public class ArmatureNode extends SKNode {
     private HashMap<String, SKNode> bones = new HashMap<>();
     private HashMap<String, SKNode> slots = new HashMap<>();
     private ArrayList<ArmatureNode> subArmatureNodes = new ArrayList<>();
-    private HashMap<String, Animation> animations = new HashMap<>();
+    private ArrayList<Animation> animations = new ArrayList<>();
 
     private static class Animation {
         public ArrayList<SKAnimation> bones = new ArrayList<>();
@@ -31,12 +31,26 @@ public class ArmatureNode extends SKNode {
 
     public int frameRate = 24;
 
+    private Animation getAnimation(String name) {
+        if (name != null) {
+            for (Animation animation : animations) {
+                if (name.equals(animation.name)) return animation;
+            }
+        } else {
+            for (Animation animation : animations) {
+                if (animation.slots.size()>0 && animation.bones.size()>0)
+                    return animation;
+            }
+        }
+        return null;
+    }
+
     // 播放制定名字的动画
     public int playAnimation(String name, boolean repeat) {
         clearAnimations();
 
         int maxFrames = 0;
-        Animation aniset = animations.get(name);
+        Animation aniset = getAnimation(name);
         ArrayList<SKAnimation> anis = aniset.bones;
         if (anis !=null && anis.size() > 0) {
             for (SKAnimation ani : anis) {
@@ -62,7 +76,10 @@ public class ArmatureNode extends SKNode {
         }
 
         for (ArmatureNode item : subArmatureNodes) {
-            item.playAnimation(name, repeat);
+            int frames = item.playAnimation(name, repeat);
+            if (frames > maxFrames) {
+                maxFrames = frames;
+            }
         }
 
         requestDraw();
@@ -74,6 +91,7 @@ public class ArmatureNode extends SKNode {
     @Override
     public void requestDraw() {
         needDraw = true;
+        super.requestDraw(); // 子node需要通知上层
     }
     // 清除绘制标志
     public boolean clearNeedDraw() {
@@ -135,7 +153,7 @@ public class ArmatureNode extends SKNode {
         for (Ka_Animation animation : armature.animations) {
             Animation aniset = new Animation();
             aniset.name = animation.name;
-            root.animations.put(animation.name, aniset);
+            root.animations.add(aniset);
 
             // bone动画序列 有位移/缩放/错切 跳帧
             for (Kaa_Bone bone : animation.bones) {
