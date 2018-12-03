@@ -4,25 +4,13 @@ import android.graphics.Camera;
 import android.graphics.Matrix;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.JsonReader;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import org.android.dragonbones.layer.ArmatureDrawable;
-import org.android.dragonbones.layer.ArmatureNode;
-import org.android.dragonbones.layer.SimpleImageCache;
-import org.android.dragonbones.parser.Skeleton;
-import org.json.JSONObject;
-import org.json.JSONTokener;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 
 public class MainActivity extends AppCompatActivity {
 
