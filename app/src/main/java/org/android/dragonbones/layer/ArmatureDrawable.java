@@ -12,6 +12,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import org.android.dragonbones.parser.Skeleton;
+import org.izzy.draw.DrawContext;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -22,9 +23,14 @@ public class ArmatureDrawable extends Drawable implements ValueAnimator.Animator
     private ImageCache mImageCache;
     private ValueAnimator mFrameAnimator;
     private ArmatureNode mNode;
-    private SKContext mDrawContext = new SKContext();
+    private SKContext mExtraContext = new SKContext();
+    private DrawContext mDrawContext = new DrawContext();
     private float mScale = 1.0f;
     private PaintFlagsDrawFilter mAntiAlias = new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
+    public ArmatureDrawable() {
+        mDrawContext.extra = mExtraContext;
+        mDrawContext.setFlag("isShowName", true);
+    }
     @Override
     public void draw(@NonNull Canvas canvas) {
         if (mNode!=null) {
@@ -174,10 +180,10 @@ public class ArmatureDrawable extends Drawable implements ValueAnimator.Animator
     @Override
     public void onAnimationUpdate(ValueAnimator valueAnimator) {
         Integer value = (Integer) valueAnimator.getAnimatedValue();
-        if (value != mDrawContext.frameIndex) {
+        if (value != mExtraContext.frameIndex) {
 //            mNode._log("onAnimationUpdate:"+value);
-            mDrawContext.frameIndex = value;
-            mNode.calcAnimations(mDrawContext.frameIndex);
+            mExtraContext.frameIndex = value;
+            mNode.calcAnimations(mExtraContext.frameIndex);
             if (mNode.clearNeedDraw()) {
                 invalidateSelf();
             } else {

@@ -1,16 +1,15 @@
 package org.android.dragonbones.layer;
 
-import android.animation.ValueAnimator;
-
 import org.android.dragonbones.parser.ShowEffect;
 import org.android.dragonbones.parser.Transform;
-
-import java.util.ArrayList;
+import org.izzy.draw.DrawContext;
+import org.izzy.view.Node;
+import org.izzy.view.NodeGroup;
 
 // 显示节点
 // bone 有坐标/偏移/缩放等属性
 // slot 没有坐标等属性 有z属性
-public class SKNode implements SKParent {
+public class SKNode extends NodeGroup {
     public String nodeType = "base";
     public boolean isShow = true;
     public int z = 0; // slot节点的属性 其他节点都是0
@@ -20,40 +19,12 @@ public class SKNode implements SKParent {
     protected SKAnimation mAnimation; // 动画对象
     protected static class InnerEffect extends ShowEffect {
         public float alphaSave = -1;
-        public void apply(SKContext ctx) {
+        public void apply(DrawContext ctx) {
             alphaSave = ctx.alpha;
             ctx.alpha *= alpha;
         }
-        public void restore(SKContext ctx) {
+        public void restore(DrawContext ctx) {
             ctx.alpha = alphaSave;
-        }
-    }
-
-    // 父节点
-    protected SKParent parent;
-    // child树结构
-    protected ArrayList<SKNode> subNodes = new ArrayList<>();
-
-//    public void _log(String txt) {
-//        android.util.Log.e("SKNode", name+"@"+nodeType+":"+txt);
-//    }
-
-    @Override
-    public void addChild(SKNode child) {
-        child.parent = this;
-        subNodes.add(child);
-    }
-
-    @Override
-    public void removeChild(SKNode child) {
-        subNodes.remove(child);
-        child.parent = null;
-        ValueAnimator v;
-    }
-
-    public void removeFromParent() {
-        if (parent!=null) {
-            parent.removeChild(this);
         }
     }
 
@@ -67,12 +38,7 @@ public class SKNode implements SKParent {
             requestDraw();
         }
     }
-    @Override
-    public void requestDraw() {
-        if (parent!=null) {
-            parent.requestDraw();
-        }
-    }
+
     // 设置显示效果 slot
     public void setEffect(ShowEffect dst) {
         if (mEffect == null) {
@@ -85,22 +51,12 @@ public class SKNode implements SKParent {
         }
     }
 
-//    public void draw(Canvas canvas, SKContext context) {
-//
-//    }
-//    protected void onMeasure(SKContext ctx) {
-//    }
-//    public void dispatchMeasure(SKContext ctx) {
-//
-//    }
-
-    protected void onLayout(SKContext ctx) {
-    }
-    public void dispatchLayout(SKContext ctx) {
+    public void dispatchLayout(DrawContext ctx) {
         // 应用动画
         int save = -1;
+        SKContext sk = (SKContext) ctx.extra;
         if (mTransform!=null) {
-            save = ctx.apply(mTransform);
+            save = sk.apply(ctx,mTransform);
         }
 
         if (mEffect!=null) {
@@ -108,7 +64,7 @@ public class SKNode implements SKParent {
             // 处理显示哪个帧
             int disIdx = mEffect.displayIndex;
             for (int i = 0; i < subNodes.size(); ++i) {
-                SKNode node = subNodes.get(i);
+                SKNode node = (SKNode) subNodes.get(i);
                 node.isShow = disIdx == i;
             }
             mEffect.apply(ctx);
@@ -117,13 +73,14 @@ public class SKNode implements SKParent {
         onLayout(ctx);
 
         if (subNodes.size()>0) {
-            ctx.z += z;
-            for (SKNode node : subNodes) {
+            sk.z += z;
+            for (Node item : subNodes) {
+                SKNode node = (SKNode) item;
                 if (node.isShow) {
                     node.dispatchLayout(ctx);
                 }
             }
-            ctx.z -= z;
+            sk.z -= z;
         }
 
         if (save != -1) {
@@ -133,31 +90,6 @@ public class SKNode implements SKParent {
             mEffect.restore(ctx);
         }
     }
-//    public void dispatchDraw(Canvas canvas, SKContext ctx) {
-//        int save = -1;
-//        if (mTransform!=null) {
-//            save = ctx.apply(mTransform);
-//        }
-//        // 先画自己
-//        draw(canvas, ctx);
-//
-//        Collections.sort(subNodes, new Comparator<SKNode>() {
-//            @Override
-//            public int compare(SKNode node0, SKNode node1) {
-//                return node0.z - node1.z;
-//            }
-//        });
-//
-//        for (SKNode node : subNodes) {
-//            if (node.isShow) {
-//                node.dispatchDraw(canvas, ctx);
-//            }
-//        }
-//
-//        if (save != -1) {
-//            canvas.restoreToCount(save);
-//        }
-//    }
 
     // 设置节点上的动画
     public void setAnimation(SKAnimation ani) {
@@ -166,8 +98,9 @@ public class SKNode implements SKParent {
     // 清除动画
     public void clearAnimations() {
         mAnimation = null;
-        for (SKNode item : subNodes) {
-            item.clearAnimations();
+        for (Node item : subNodes) {
+            SKNode node = (SKNode) item;
+            node.clearAnimations();
         }
     }
     // 更新动画参数
@@ -176,8 +109,9 @@ public class SKNode implements SKParent {
             mAnimation.update(this, frameIdx);
         }
 
-        for (SKNode item : subNodes) {
-            item.calcAnimations(frameIdx);
+        for (Node item : subNodes) {
+            SKNode node = (SKNode) item;
+            node.calcAnimations(frameIdx);
         }
     }
 }

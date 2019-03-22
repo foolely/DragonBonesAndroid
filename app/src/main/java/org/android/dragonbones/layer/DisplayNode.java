@@ -5,8 +5,11 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 
+import org.izzy.draw.DrawContext;
+import org.izzy.draw.DrawItem;
+
 // 绘制图片的node 目前唯一的显示单元
-public class DisplayNode extends SKNode implements SKDraw {
+public class DisplayNode extends SKNode implements DrawItem {
     protected Paint mPaint = new Paint();
     public Bitmap mImage;
     private Matrix mMatrix = new Matrix();
@@ -26,17 +29,18 @@ public class DisplayNode extends SKNode implements SKDraw {
 
     // 获取当前的布局位置
     @Override
-    protected void onLayout(SKContext ctx) {
+    protected void onLayout(DrawContext ctx) {
+        SKContext sk = (SKContext) ctx.extra;
         mMatrix.set(ctx.matrix);
-        zOrder = ctx.z + z;
+        zOrder = sk.z + z;
         mPaint.setAlpha((int)(255*ctx.alpha));
         ctx.addDrawItem(this);
     }
 
     // 绘制吧
     @Override
-    public void draw(Canvas canvas, SKContext ctx) {
-        if (ctx.isShowName) {
+    public void draw(Canvas canvas, DrawContext ctx) {
+        if (ctx.hasFlag("isShowName")) {
             mPaint.setColor(0xff0000ff);
             canvas.drawText(name, 0, 0, mPaint);
         }
